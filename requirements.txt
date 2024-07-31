@@ -12,7 +12,7 @@ flask
 xgboost
 Flask-SQLAlchemy
 Flask
-
+streamlit
 # external requirements
 click
 Sphinx
