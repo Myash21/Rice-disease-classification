@@ -1,13 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+import streamlit as st
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
 import io
 import numpy as np
-from langchain.llms import Ollama
-
-app = Flask(__name__)
 
 # Define the device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -37,34 +34,23 @@ def preprocess_image(image_bytes):
     image = Image.open(io.BytesIO(image_bytes))
     return data_transforms(image).unsqueeze(0)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Streamlit app
+st.title('Disease Classification')
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    if 'file' not in request.files:
-        return render_template('index.html', prediction='No file part')
-    
-    file = request.files['file']
+uploaded_file = st.file_uploader("Choose an image...", type="jpg")
 
-    if file.filename == '':
-        return render_template('index.html', prediction='No selected file')
-    
-    if file:
-        img_bytes = file.read()
-        tensor = preprocess_image(img_bytes).to(device)
+if uploaded_file is not None:
+    img_bytes = uploaded_file.read()
+    tensor = preprocess_image(img_bytes).to(device)
 
-        with torch.no_grad():
-            outputs = model(tensor)
-            _, predicted = torch.max(outputs, 1)
-            class_idx = predicted.item()
+    with torch.no_grad():
+        outputs = model(tensor)
+        _, predicted = torch.max(outputs, 1)
+        class_idx = predicted.item()
 
-        # Assuming you have a list of class names
-        class_names = ['Bacterial Blight Disease', 'Blast Disease', 'Brown Spot Disease', 'False Smut Disease']
-        predicted_class = class_names[class_idx]
+    # Assuming you have a list of class names
+    class_names = ['Bacterial Blight Disease', 'Blast Disease', 'Brown Spot Disease', 'False Smut Disease']
+    predicted_class = class_names[class_idx]
 
-        return render_template('index.html', prediction=f'Class = {predicted_class}')
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    st.image(Image.open(io.BytesIO(img_bytes)), caption='Uploaded Image', use_column_width=True)
+    st.write(f'Prediction: {predicted_class}')
