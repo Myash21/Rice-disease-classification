@@ -1,10 +1,13 @@
-import streamlit as st
+from flask import Flask, request, render_template
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
 import io
 import numpy as np
+
+# Initialize Flask app
+app = Flask(__name__)
 
 # Define the device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -34,23 +37,32 @@ def preprocess_image(image_bytes):
     image = Image.open(io.BytesIO(image_bytes))
     return data_transforms(image).unsqueeze(0)
 
-# Streamlit app
-st.title('Disease Classification')
+# Define class names
+class_names = ['Bacterial Blight Disease', 'Blast Disease', 'Brown Spot Disease', 'False Smut Disease']
 
-uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-if uploaded_file is not None:
-    img_bytes = uploaded_file.read()
-    tensor = preprocess_image(img_bytes).to(device)
+@app.route('/predict', methods=['POST'])
+def predict():
+    file = request.files['file']
+    
+    if file and file.filename != '':
+        img_bytes = file.read()
+        tensor = preprocess_image(img_bytes).to(device)
 
-    with torch.no_grad():
-        outputs = model(tensor)
-        _, predicted = torch.max(outputs, 1)
-        class_idx = predicted.item()
+        with torch.no_grad():
+            outputs = model(tensor)
+            _, predicted = torch.max(outputs, 1)
+            class_idx = predicted.item()
 
-    # Assuming you have a list of class names
-    class_names = ['Bacterial Blight Disease', 'Blast Disease', 'Brown Spot Disease', 'False Smut Disease']
-    predicted_class = class_names[class_idx]
+        predicted_class = class_names[class_idx]
 
-    st.image(Image.open(io.BytesIO(img_bytes)), caption='Uploaded Image', use_column_width=True)
-    st.write(f'Prediction: {predicted_class}')
+        return render_template('index.html', prediction=predicted_class)
+
+    return render_template('index.html', prediction="No file uploaded or unsupported file format")
+
+# Flask app start point
+if __name__ == '__main__':
+    app.run(debug=True)
