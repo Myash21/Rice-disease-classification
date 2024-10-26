@@ -32,7 +32,6 @@ The classification model is based on the ResNet-18 architecture with modificatio
       ```bash
    pip install -r requirements.txt
 
-
 ## Usage
 
 1. **Run the Flask app**:
@@ -43,3 +42,16 @@ The classification model is based on the ResNet-18 architecture with modificatio
    - Upload an image of the rice plant.
    - The app will classify the image and display the predicted disease name.
   
+## Code Overview
+- app.py: Defines the Flask app, handling web routes and model predictions.
+- model.py: Contains code for training the model, including data preprocessing and model tuning.
+- requirements.txt: Lists the required Python packages.
+- templates/index.html: Frontend template for uploading images and viewing predictions.
+
+## Results
+The model achieves high accuracy on validation data, with detailed performance metrics reported on the training dataset. Example results are provided for each disease category.
+
+## Future Work
+- Expanding to include additional rice diseases.
+- Integrating recommendation logic for disease management.
+- Enhancing the user interface for mobile accessibility.
